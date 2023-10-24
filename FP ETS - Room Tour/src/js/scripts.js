@@ -100,6 +100,8 @@ let moveBackward = false;
 let moveLeft = false;
 let moveRight = false;
 let canJump = false;
+let canCrouch = false;
+
 
 let prevTime = performance.now();
 const velocity = new THREE.Vector3();
@@ -161,7 +163,6 @@ const onKeyDown = function ( event ) {
             if ( canJump === true ) velocity.y += 200;
             canJump = false;
             break;
-
     }
 
 };
@@ -196,8 +197,23 @@ const onKeyUp = function ( event ) {
 
 document.addEventListener( 'keydown', onKeyDown );
 document.addEventListener( 'keyup', onKeyUp );
+document.addEventListener('keydown', function (event) {
+    if (event.code === 'ShiftLeft') {
+        canCrouch = true;
+    }
+});
+
+document.addEventListener('keyup', function (event) {
+    if (event.code === 'ShiftLeft') {
+        canCrouch = false;
+    }
+});
+
 // raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
 //------------------------------------------------------------------------------------------------------
+
+
+
 
 
 //light start
@@ -227,7 +243,7 @@ spotLight.angle = 0;
 spotLight.target.position.set(-10, 0, -20);
 
 const sLightHelper = new THREE.SpotLightHelper(spotLight);
-// scene.add(sLightHelper);
+//scene.add(sLightHelper);
 //spotlight end
 
 //spotlight2 start
@@ -239,8 +255,45 @@ spotlight2.angle = 2;
 // spotlight2.target.position.set(-10, 0, -20);
 
 const sLightHelper2 = new THREE.SpotLightHelper(spotlight2);
-// scene.add(sLightHelper2);
+//scene.add(sLightHelper2);
 //spotlight2 end
+
+//kursor
+// Buat elemen crosshair
+const crosshair = document.createElement('div');
+crosshair.classList.add('crosshair');
+
+// Tambahkan elemen crosshair ke dalam body
+document.body.appendChild(crosshair);
+
+// Setel tampilan crosshair
+crosshair.style.width = '10px'; // Ubah sesuai kebutuhan
+crosshair.style.height = '10px'; // Ubah sesuai kebutuhan
+crosshair.style.border = '2px solid #ffffff'; // Ubah sesuai kebutuhan
+crosshair.style.position = 'absolute';
+crosshair.style.left = 'calc(50% - 12px)'; // Menyusun secara horizontal di tengah
+crosshair.style.top = 'calc(50% - 12px)'; // Menyusun secara vertikal di tengah
+crosshair.style.pointerEvents = 'none'; // Membuat crosshair tidak menghalangi interaksi
+
+// Fungsi untuk mengatur visibilitas crosshair
+function setCrosshairVisible(visible) {
+    crosshair.style.display = visible ? 'block' : 'none';
+}
+
+plcontrols.addEventListener('lock', function () {
+    instructions.style.display = 'none';
+    blocker.style.display = 'none';
+    setCrosshairVisible(true); // Menampilkan crosshair saat bermain
+});
+
+plcontrols.addEventListener('unlock', function () {
+    blocker.style.display = 'block';
+    instructions.style.display = '';
+    setCrosshairVisible(false); // Menyembunyikan crosshair saat berhenti bermain
+});
+
+//kursor
+
 
 //sabre
 let sabreObject;
@@ -270,6 +323,7 @@ assetLoader.load(sabreUrl.href, function(gltf){
         }
     });
     sabreObject = sabre;
+
 
 }, undefined, function(error){
     console.error(error);
@@ -633,10 +687,6 @@ assetLoader.load(dumbellUrl.href, function(gltf){
 //------------------------------------------------------------------------------------------------------
 
 
-
-
-
-
 //dumbellrack
 assetLoader.load(dumbellrackUrl.href, function(gltf){
     const dumbellrack = gltf.scene;
@@ -831,7 +881,8 @@ const options = {
     spotLightPenumbra: 0,
     spotLightIntensity: 9000,
     LampColor: 0xFFFFFF,
-    ToggleLamp: false
+    ToggleLamp: false,
+    zoom: 1.0
     // spotLightPositionX: -80
 };
 // gui.addColor(options, 'sphereColor').onChange(function(e){
@@ -853,8 +904,11 @@ gui.add(options, 'ToggleLamp').onChange(function(e){
         spotlight2.angle = 2;
     }
 });
-
-
+gui.add(options, 'zoom', 1, 5).onChange(function(value) {
+    // Fungsi ini akan dipanggil setiap kali nilai zoom diubah melalui GUI
+    camera.zoom = value;
+    camera.updateProjectionMatrix();
+});
 
 animate();
 function animate(){ //fungsi untuk bikin animasi rotasi
@@ -907,7 +961,9 @@ function animate(){ //fungsi untuk bikin animasi rotasi
                 plcontrols.getObject().position.y = 15;
     
                 canJump = true;
-            } 
+            }
+
+            //Tembok
             if(plcontrols.getObject().position.x > 30){
                 plcontrols.getObject().position.x = 30;
             } else if(plcontrols.getObject().position.x < -30){
@@ -916,6 +972,16 @@ function animate(){ //fungsi untuk bikin animasi rotasi
                 plcontrols.getObject().position.z = 55;
             } else if(plcontrols.getObject().position.z < -55){
                 plcontrols.getObject().position.z = -55;
+            
+            // Kasur
+            }else if(plcontrols.getObject().position.x < -2 && plcontrols.getObject().position.z < -10){
+                plcontrols.getObject().position.y = 25;
+            
+            
+            //Sofa
+            }else if(plcontrols.getObject().position.x < -17 && plcontrols.getObject().position.z > 0 && 
+                    plcontrols.getObject().position.z < 32){
+                plcontrols.getObject().position.y = 25;
             }
     
         }
@@ -936,6 +1002,15 @@ function animate(){ //fungsi untuk bikin animasi rotasi
             sabreObject.position.z -=0.02
         }
     
+        if (canCrouch) {
+            if (plcontrols.getObject().position.y > 20)
+                camera.position.y = 17.5;
+            else
+                camera.position.y = 7.5; // Sesuaikan tinggi sesuai kebutuhan
+        } else if(canCrouch==true){
+            camera.position.y = 15; // Tinggi normal
+        }
+        
     renderer.render(scene, camera);
 }
 
