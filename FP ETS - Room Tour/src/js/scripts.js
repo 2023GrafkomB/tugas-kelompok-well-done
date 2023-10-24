@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+import { DragControls } from 'three/examples/jsm/controls/DragControls.js';
 import * as dat from 'dat.gui';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -199,9 +200,6 @@ document.addEventListener( 'keyup', onKeyUp );
 //------------------------------------------------------------------------------------------------------
 
 
-
-
-
 //light start
 const ambientLight = new THREE.AmbientLight(0xFFFFFF, 2);
 scene.add(ambientLight);
@@ -229,7 +227,7 @@ spotLight.angle = 0;
 spotLight.target.position.set(-10, 0, -20);
 
 const sLightHelper = new THREE.SpotLightHelper(spotLight);
-scene.add(sLightHelper);
+// scene.add(sLightHelper);
 //spotlight end
 
 //spotlight2 start
@@ -241,10 +239,11 @@ spotlight2.angle = 2;
 // spotlight2.target.position.set(-10, 0, -20);
 
 const sLightHelper2 = new THREE.SpotLightHelper(spotlight2);
-scene.add(sLightHelper2);
+// scene.add(sLightHelper2);
 //spotlight2 end
 
 //sabre
+let sabreObject;
 assetLoader.load(sabreUrl.href, function(gltf){
     const sabre = gltf.scene;
     scene.add(sabre);
@@ -270,7 +269,7 @@ assetLoader.load(sabreUrl.href, function(gltf){
             // child.material.shadowMap.autoUpdate = true;
         }
     });
-
+    sabreObject = sabre;
 
 }, undefined, function(error){
     console.error(error);
@@ -590,6 +589,54 @@ assetLoader.load(dumbellUrl.href, function(gltf){
 });
 //dumbell
 
+//------------------------------------------------------------------------------------------------------
+// let dragControl;
+// dragControl = new DragControls([dumbellObject], camera, renderer.domElement);
+// dragControl.addEventListener('drag', animate);
+
+
+// const onClick = function ( event ) {
+
+//     event.preventDefault();
+
+//     const draggableObjects = dragControl.getObjects();
+//     draggableObjects.length = 0;
+
+//     mousePosition.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+//     mousePosition.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+//     raycasterMouse.setFromCamera( mouse, camera );
+
+//     const dragIntersection = raycaster.intersectObject( dumbellObject, true );
+
+//     if ( dragIntersection.length > 0 ) {
+
+//         // const object = dragIntersection[ 0 ].object;
+//         // scene.attach(dumbellObject);a
+
+//         dragControl.transformGroup = true;
+//         draggableObjects.push( dumbellObject );
+
+//     }
+
+//     // if ( group.children.length === 0 ) {
+
+//     //     controls.transformGroup = false;
+//     //     draggableObjects.push( ...objects );
+
+//     // }
+
+//     animate();
+// }
+
+// document.addEventListener( 'click', onClick );
+//------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
 //dumbellrack
 assetLoader.load(dumbellrackUrl.href, function(gltf){
     const dumbellrack = gltf.scene;
@@ -783,7 +830,8 @@ const options = {
     spotLightAngle: 0,
     spotLightPenumbra: 0,
     spotLightIntensity: 9000,
-    LampColor: 0xFFFFFF
+    LampColor: 0xFFFFFF,
+    ToggleLamp: false
     // spotLightPositionX: -80
 };
 // gui.addColor(options, 'sphereColor').onChange(function(e){
@@ -797,6 +845,13 @@ gui.add(options, 'spotLightPenumbra', 0, 1);
 gui.add(options, 'spotLightIntensity', 0, 50000);
 gui.addColor(options, 'LampColor').onChange(function(e){
     spotlight2.color.set(e);
+});
+gui.add(options, 'ToggleLamp').onChange(function(e){
+    if(e > 0){
+        spotlight2.angle = 0;
+    } else if(e == 0){
+        spotlight2.angle = 2;
+    }
 });
 
 
@@ -870,9 +925,15 @@ function animate(){ //fungsi untuk bikin animasi rotasi
 
         raycasterMouse.setFromCamera(mousePosition, camera);
         const intersectDumbell = raycasterMouse.intersectObject(dumbellObject, true);
+        const intersectSabre = raycasterMouse.intersectObject(sabreObject, true);
 
         if (intersectDumbell.length > 0) {
-            dumbellObject.rotation.y += 0.02; // Contoh: putar objek gitar
+            dumbellObject.rotation.y += 0.02; // Contoh: putar objek 
+            // dumbellObject.position.x +=0.02
+        }
+        if (intersectSabre.length > 0) {
+            sabreObject.rotation.y += 0.02; // Contoh: putar objek 
+            sabreObject.position.z -=0.02
         }
     
     renderer.render(scene, camera);
