@@ -18,4 +18,5 @@ npm install --save-dev vite
 npm install dat.gui
 ```
 4. Download file assets dari `https://drive.google.com/file/d/1KI6lKeMs0wrCJRrsOomdds4gR8PEAxsW/view?usp=sharing` lalu ekstrak dan masukkan ke folder `/src/assets`
-5. Jalankan command `parcel ./src/index.html` lalu buka port yang ditampilkan
+5. Hapus `.parcel-cache` jika ada
+6. Jalankan command `parcel ./src/index.html` lalu buka port yang ditampilkan
